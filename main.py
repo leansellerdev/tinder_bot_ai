@@ -12,6 +12,7 @@ import requests
 from attractive_net.AttractiveNet.test import get_beauty_score
 import os
 from chat_bot.answer import answer_questions
+from secret import login, password
 
 IMGCOUNTER = 0
 DELAY = 10
@@ -29,7 +30,7 @@ def change_user_agent(driver):
 def start_chrome():
 
     options = uc.ChromeOptions()
-    profile = f"C:/Users/{os.getlogin()}/AppData/Local/Google/Chrome/User Data/Profile 1"
+    profile = f"C:/Users/{os.getlogin()}/AppData/Local/Google/Chrome/User Data/Profile 3"
     options.add_argument(f'user-data-dir={profile}')
     driver = uc.Chrome(options=options)
     driver.implicitly_wait(60)
@@ -59,33 +60,31 @@ def log_in(driver, email, password):
     emulate_human_response()
     driver = change_user_agent(driver)
 
-    try:
-        driver.switch_to.window(driver.window_handles[1])
 
-        xpath = "//input[@type='email']"
-        WebDriverWait(driver, DELAY).until(
-            EC.presence_of_element_located((By.XPATH, xpath)))
+    driver.switch_to.window(driver.window_handles[1])
 
-        emulate_human_response()
-        emailfield = driver.find_element(By.XPATH, xpath)
-        emailfield.send_keys(email)
-        emulate_human_response()
-        emailfield.send_keys(Keys.ENTER)
-        emulate_human_response()
+    xpath = "//input[@type='email']"
+    WebDriverWait(driver, DELAY).until(
+        EC.presence_of_element_located((By.XPATH, xpath)))
 
-        xpath = "//input[@type='password']"
-        WebDriverWait(driver, DELAY).until(
-            EC.presence_of_element_located((By.XPATH, xpath)))
+    emulate_human_response()
+    emailfield = driver.find_element(By.XPATH, xpath)
+    emailfield.send_keys(email)
+    emulate_human_response()
+    emailfield.send_keys(Keys.ENTER)
+    emulate_human_response()
 
-        driver = change_user_agent(driver)
-        emulate_human_response()
-        pwdfield = driver.find_element(By.XPATH, xpath)
-        pwdfield.send_keys(password)
-        emulate_human_response()
-        pwdfield.send_keys(Keys.ENTER)
-        driver.switch_to.window(driver.window_handles[0])
-    except:
-        print('Вы уже авторизованы')
+    xpath = "//input[@type='password']"
+    WebDriverWait(driver, DELAY).until(
+        EC.presence_of_element_located((By.XPATH, xpath)))
+
+    driver = change_user_agent(driver)
+    emulate_human_response()
+    pwdfield = driver.find_element(By.XPATH, xpath)
+    pwdfield.send_keys(password)
+    emulate_human_response()
+    pwdfield.send_keys(Keys.ENTER)
+    driver.switch_to.window(driver.window_handles[0])
     accept_all()
 
 
@@ -180,31 +179,21 @@ def join_chat(driver, links):
 def download_img(driver):
 
     global IMGCOUNTER
+    img_class = "Bdrs(8px) Bgz(cv) Bgp(c) StretchedBox"
 
-    imgs = driver.find_elements(
-        By.XPATH, "//div[@role='img']")
-    while (len(imgs) < 14):
-        imgs = driver.find_elements(
-            By.XPATH, "//div[@role='img']")
-        time.sleep(0.5)
+    WebDriverWait(driver, DELAY).until(EC.presence_of_element_located((By.XPATH, f'//div[@class="{img_class}"]')))
 
-    if len(imgs) == 16:
-        img_data = requests.get(imgs[4].value_of_css_property(
+    image = driver.find_element(
+        By.XPATH, f'//div[@class="{img_class}"]')
+
+    img_data = requests.get(image.value_of_css_property(
             "background-image")[5:-2]).content
-        person_face_name = 'person_avatars/' + f'person_face{IMGCOUNTER}.jpg'
-        with open(person_face_name, 'wb') as handler:
-            handler.write(img_data)
-        IMGCOUNTER = IMGCOUNTER + 1
-        return person_face_name
+    person_face_name = 'person_avatars/' + f'person_face{IMGCOUNTER}.jpg'
+    with open(person_face_name, 'wb') as handler:
+        handler.write(img_data)
+    IMGCOUNTER = IMGCOUNTER + 1
 
-    if len(imgs) == 15:
-        img_data = requests.get(imgs[3].value_of_css_property(
-            "background-image")[5:-2]).content
-        person_face_name = 'person_avatars/' + f'person_face{IMGCOUNTER}.jpg'
-        with open(person_face_name, 'wb') as handler:
-            handler.write(img_data)
-        IMGCOUNTER = IMGCOUNTER + 1
-        return person_face_name
+    return person_face_name
 
 
 def delete_img():
@@ -245,6 +234,17 @@ def do_likes(driver):
         print('---')
 
 
+def log_in_check(driver):
+
+    time.sleep(0.5)
+    site = driver.current_url
+    if site == 'https://tinder.com/':
+        log_in(driver, login, password)
+        print('login')
+    else:
+        print('Вы уже авторизованы!')
+
+
 def start_bot():
     # Start our tinder bot.
 
@@ -252,10 +252,7 @@ def start_bot():
     driver = change_user_agent(driver)
     driver.get("https://tinder.com/")
     driver.maximize_window()
-    # try:
-    #     log_in(driver, "leansellerbeats@gmail.com", "28406100DanIIl777")
-    # except:
-    #     print('Вы уже авторизованы')
+    log_in_check(driver)
 
     return driver
 
@@ -264,7 +261,7 @@ def main():
     driver = start_bot()
 
     while True:
-        for _ in range(10):
+        for _ in range(2):
             do_likes(driver)
 
         collect_chats(driver)
