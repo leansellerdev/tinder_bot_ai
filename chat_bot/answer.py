@@ -24,7 +24,7 @@ def answer_questions(question):
     response = requests.post("https://api.aicloud.sbercloud.ru/public/v1/public_inference/gpt3/predict",
                              json={"text": question}, headers=headers)
     answer = ""
-    if (response.status_code == 200):
+    if response.status_code == 200:
         try:
             answer = response.json()['predictions'].split('\n')
             new_answer = answer[1]
@@ -54,4 +54,4 @@ def answer_questions(question):
 # for i in range(10):
 #     q = answer_questions(input())
 #     print(q)
-#     generate_voice(q)
+    # generate_voice(q)
