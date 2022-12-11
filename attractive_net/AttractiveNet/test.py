@@ -4,7 +4,6 @@ import numpy as np
 import os
 
 
-
 def load_image(img_path, show=False):
     img = load_img(img_path, target_size=(300, 300))
     # (height, width, channels)
